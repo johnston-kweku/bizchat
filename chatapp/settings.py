@@ -1,3 +1,10 @@
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
+
 """
 Django settings for chatapp project.
 
@@ -10,10 +17,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
-from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -147,14 +155,24 @@ class UpdateLastSeenMiddleware:
             UserProfile.objects.filter(user=request.user).update(last_seen=now())
         return self.get_response(request)
         
-import os
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS") == "True"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS") == "True"
+
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+
+
+print("DEBUG EMAIL_HOST =", EMAIL_HOST)
+print("DEBUG EMAIL_PORT =", EMAIL_PORT)
+print("DEBUG EMAIL_USER =", EMAIL_HOST_USER)
+
+
+
 
 
 

@@ -27,7 +27,8 @@ def register(request):
 
             # 📧 Send welcome email (HTML + text)
             subject = 'Welcome to Biz Chat App 🎉'
-            from_email = settings.DEFAULT_FROM_EMAIL
+            from_email = from_email = f"Biz Chat <{settings.EMAIL_HOST_USER}>"
+
             to = [user.email]
 
             text_content = f"""
@@ -53,9 +54,10 @@ We’re excited to have you 🚀
             email.attach_alternative(html_content, "text/html")
 
             try:
-                email.send()
-            except:
-                pass   # never block signup because of email
+                email.send(fail_silently=False)
+            except Exception as e:
+                print("Could not send Email")
+                print(e)
 
             login(request, user)
             return redirect('chat:chat-home')

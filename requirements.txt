@@ -21,6 +21,7 @@ psycopg==3.3.2
 psycopg-binary==3.3.2
 py-vapid==1.9.4
 pycparser==2.23
+python-dotenv==1.2.1
 pywebpush==2.2.0
 requests==2.32.5
 six==1.17.0
