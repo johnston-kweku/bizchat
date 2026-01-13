@@ -1,0 +1,663 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.5;
+    color: #333;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Top Navigation */
+.service-top-nav {
+    background: #f59e0b;
+    padding: 0 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(245, 158, 11, 0.2);
+    border-bottom: 1px solid #d97706;
+}
+
+/* Back Link */
+.service-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #d97706;
+    color: white !important;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    white-space: nowrap;
+    margin-right: 20px;
+}
+
+.service-back-link:hover {
+    background: #b45309;
+    transform: translateX(-2px);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.service-back-link i {
+    font-size: 0.9em;
+}
+
+/* Page Header */
+.service-header {
+    text-align: center;
+    color: white;
+    flex: 1;
+    padding: 0 20px;
+}
+
+.service-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.service-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 4px;
+    color: #fffbeb;
+}
+
+/* Main Container */
+.service-container {
+    max-width: 600px;
+    margin: 84px auto 30px;
+    padding: 0 20px;
+}
+
+/* Form Card */
+.service-form-card {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1);
+    border: 1px solid #fde68a;
+    margin-bottom: 30px;
+}
+
+/* Form Styling */
+.service-form-wrapper {
+    margin: 0;
+    padding: 0;
+}
+
+/* Django Form Paragraph Styling */
+.service-form-wrapper p {
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.service-form-wrapper label {
+    display: block;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.service-form-wrapper label i {
+    color: #d97706;
+    font-size: 0.9rem;
+}
+
+.service-form-wrapper input[type="text"],
+.service-form-wrapper textarea {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #fde68a;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: #fffbeb;
+    color: #333;
+}
+
+.service-form-wrapper textarea {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.service-form-wrapper input:focus,
+.service-form-wrapper textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    background: white;
+}
+
+.service-form-wrapper input::placeholder,
+.service-form-wrapper textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Required Field Indicator */
+.required-field::after {
+    content: " *";
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+/* Character Count */
+.char-count {
+    display: block;
+    text-align: right;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+.char-count.warning {
+    color: #f59e0b;
+}
+
+.char-count.error {
+    color: #ef4444;
+}
+
+/* Form Errors */
+.errorlist {
+    list-style: none;
+    margin-top: 8px;
+    padding: 0;
+}
+
+.errorlist li {
+    color: #ef4444;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background: #fee2e2;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    border-left: 3px solid #ef4444;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.errorlist li::before {
+    content: "⚠️";
+    font-size: 0.8rem;
+}
+
+.helptext {
+    display: block;
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    font-style: italic;
+    padding-left: 24px;
+    position: relative;
+}
+
+.helptext::before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Submit Button */
+.service-submit-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 40px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 30px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.service-submit-button:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+}
+
+.service-submit-button:active {
+    transform: translateY(0);
+}
+
+.service-submit-button i {
+    font-size: 1.2rem;
+}
+
+/* Button Loading State */
+.service-submit-button.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.service-submit-button.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Form Section Groups */
+.form-section-group {
+    background: #f8fafc;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1px solid #e5e7eb;
+}
+
+.section-group-title {
+    font-size: 1.2rem;
+    color: #92400e;
+    margin-bottom: 20px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-group-title i {
+    color: #d97706;
+}
+
+/* Status Message */
+.service-status {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 500;
+    display: none;
+}
+
+.service-status.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    display: block;
+}
+
+.service-status.success::before {
+    content: "✅ ";
+}
+
+.service-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    display: block;
+}
+
+.service-status.error::before {
+    content: "❌ ";
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid #fde68a;
+}
+
+/* Cancel Button */
+.cancel-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 30px;
+    background: #6b7280;
+    color: white !important;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    flex: 1;
+}
+
+.cancel-button:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+/* Service Tips */
+.service-tips {
+    background: #fffbeb;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+    border: 1px solid #fde68a;
+}
+
+.tips-title {
+    font-size: 1.1rem;
+    color: #92400e;
+    margin-bottom: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tips-title i {
+    color: #d97706;
+}
+
+.tips-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.tips-list li {
+    margin-bottom: 10px;
+    padding-left: 24px;
+    position: relative;
+    color: #4b5563;
+}
+
+.tips-list li::before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+    
+    .service-top-nav {
+        padding: 0 15px;
+        height: 56px;
+    }
+    
+    .service-back-link {
+        padding: 8px 16px;
+        font-size: 0.95rem;
+        margin-right: 15px;
+    }
+    
+    .service-title {
+        font-size: 1.3rem;
+    }
+    
+    .service-subtitle {
+        font-size: 0.85rem;
+    }
+    
+    .service-container {
+        padding: 0 15px;
+        margin: 66px auto 20px;
+    }
+    
+    .service-form-card {
+        padding: 25px;
+    }
+    
+    .service-form-wrapper input[type="text"],
+    .service-form-wrapper textarea {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
+    
+    .service-form-wrapper textarea {
+        min-height: 120px;
+    }
+    
+    .service-submit-button {
+        padding: 14px 30px;
+        font-size: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .cancel-button,
+    .service-submit-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px;
+    }
+    
+    .service-top-nav {
+        padding: 0 12px;
+        height: 50px;
+    }
+    
+    .service-back-link {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        margin-right: 10px;
+    }
+    
+    .service-back-link span {
+        display: none;
+    }
+    
+    .service-back-link i {
+        font-size: 1.1rem;
+    }
+    
+    .service-title {
+        font-size: 1.1rem;
+    }
+    
+    .service-subtitle {
+        display: none;
+    }
+    
+    .service-container {
+        padding: 0 12px;
+        margin: 60px auto 15px;
+    }
+    
+    .service-form-card {
+        padding: 20px;
+    }
+    
+    .service-form-wrapper input[type="text"],
+    .service-form-wrapper textarea {
+        padding: 12px 14px;
+        font-size: 0.9rem;
+    }
+    
+    .service-form-wrapper textarea {
+        min-height: 100px;
+    }
+    
+    .service-submit-button {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        color: #f3f4f6;
+    }
+    
+    .service-top-nav {
+        background: #92400e;
+        border-bottom-color: #78350f;
+    }
+    
+    .service-back-link {
+        background: #b45309;
+    }
+    
+    .service-back-link:hover {
+        background: #92400e;
+    }
+    
+    .service-title {
+        color: white;
+    }
+    
+    .service-subtitle {
+        color: #fbbf24;
+    }
+    
+    .service-form-card {
+        background: #374151;
+        border-color: #6b7280;
+    }
+    
+    .service-form-wrapper label {
+        color: #fbbf24;
+    }
+    
+    .service-form-wrapper label i {
+        color: #f59e0b;
+    }
+    
+    .service-form-wrapper input[type="text"],
+    .service-form-wrapper textarea {
+        background: #1f2937;
+        border-color: #6b7280;
+        color: #f3f4f6;
+    }
+    
+    .service-form-wrapper input:focus,
+    .service-form-wrapper textarea:focus {
+        border-color: #f59e0b;
+        background: #374151;
+    }
+    
+    .errorlist li {
+        background: #7f1d1d;
+        color: #fecaca;
+        border-left-color: #ef4444;
+    }
+    
+    .helptext {
+        color: #9ca3af;
+    }
+    
+    .form-section-group {
+        background: #1f2937;
+        border-color: #6b7280;
+    }
+    
+    .section-group-title {
+        color: #fbbf24;
+        border-bottom-color: #6b7280;
+    }
+    
+    .section-group-title i {
+        color: #f59e0b;
+    }
+    
+    .service-status.success {
+        background: #064e3b;
+        color: #a7f3d0;
+        border-color: #059669;
+    }
+    
+    .service-status.error {
+        background: #7f1d1d;
+        color: #fecaca;
+        border-color: #ef4444;
+    }
+    
+    .cancel-button {
+        background: #4b5563;
+    }
+    
+    .cancel-button:hover {
+        background: #6b7280;
+    }
+    
+    .service-tips {
+        background: #92400e;
+        border-color: #b45309;
+    }
+    
+    .tips-title {
+        color: #fbbf24;
+    }
+    
+    .tips-title i {
+        color: #f59e0b;
+    }
+    
+    .tips-list li {
+        color: #e5e7eb;
+    }
+    
+    .char-count {
+        color: #9ca3af;
+    }
+    
+    .char-count.warning {
+        color: #f59e0b;
+    }
+    
+    .char-count.error {
+        color: #ef4444;
+    }
+}

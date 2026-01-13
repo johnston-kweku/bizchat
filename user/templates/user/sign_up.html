@@ -1,0 +1,316 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Business Chat Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/sign_up.css' %}">
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <!-- Logo Header -->
+            <div class="register-header">
+                <a href="/" class="register-logo">
+                    <i class="fas fa-comments"></i>
+                    <div class="register-logo-text">Business<span>Chat</span> Pro</div>
+                </a>
+                <h1 class="register-title">Create Account</h1>
+                <p class="register-subtitle">Join our business community today</p>
+            </div>
+
+            <!-- Form Errors (if any) -->
+            {% if form.errors %}
+                <div class="errors">
+                    <p><strong>Please correct the following errors:</strong></p>
+                    {{ form.errors }}
+                </div>
+            {% endif %}
+
+            <!-- Registration Form -->
+            <form method="post" class="register-form" id="register-form">
+                {% csrf_token %}
+                
+                <!-- Django will insert form fields here -->
+                {{ form.as_p }}
+                
+                <!-- Submit Button -->
+                <button type="submit" class="register-button" id="register-button">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div class="register-login">
+                <p>Already have an account?</p>
+                <a href="{% url 'user:login' %}" class="login-link">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form elements
+        const registerForm = document.getElementById('register-form');
+        const registerButton = document.getElementById('register-button');
+        
+        // Add icons to form labels based on field type
+        const labels = document.querySelectorAll('.register-form label');
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            let iconClass = 'fas fa-user'; // default icon
+            
+            if (labelText.includes('email')) {
+                iconClass = 'fas fa-envelope';
+            } else if (labelText.includes('password')) {
+                iconClass = 'fas fa-lock';
+            } else if (labelText.includes('username')) {
+                iconClass = 'fas fa-user-circle';
+            } else if (labelText.includes('first') || labelText.includes('name')) {
+                iconClass = 'fas fa-user';
+            } else if (labelText.includes('last')) {
+                iconClass = 'fas fa-user';
+            } else if (labelText.includes('phone')) {
+                iconClass = 'fas fa-phone';
+            } else if (labelText.includes('company') || labelText.includes('business')) {
+                iconClass = 'fas fa-building';
+            } else if (labelText.includes('agree') || labelText.includes('terms')) {
+                iconClass = 'fas fa-file-contract';
+            }
+            
+            // Create icon element
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            
+            // Insert icon at beginning of label
+            label.insertBefore(icon, label.firstChild);
+            
+            // Add required field indicator
+            const inputId = label.getAttribute('for');
+            if (inputId) {
+                const input = document.getElementById(inputId);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required-field');
+                }
+            }
+        });
+        
+        // Password strength indicator
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        passwordInputs.forEach(input => {
+            // Create password strength container
+            const strengthContainer = document.createElement('div');
+            strengthContainer.className = 'password-strength';
+            strengthContainer.innerHTML = `
+                <div class="strength-meter">
+                    <div class="strength-bar" id="strength-bar"></div>
+                </div>
+                <div class="strength-text" id="strength-text">Password strength: Weak</div>
+            `;
+            
+            // Insert after password input
+            input.parentNode.appendChild(strengthContainer);
+            
+            // Password requirements
+            const requirements = document.createElement('div');
+            requirements.className = 'password-requirements';
+            requirements.innerHTML = `
+                <p><strong>Password must contain:</strong></p>
+                <ul>
+                    <li id="req-length">At least 8 characters</li>
+                    <li id="req-uppercase">One uppercase letter</li>
+                    <li id="req-lowercase">One lowercase letter</li>
+                    <li id="req-number">One number</li>
+                    <li id="req-special">One special character</li>
+                </ul>
+            `;
+            
+            input.parentNode.appendChild(requirements);
+            
+            // Update password strength
+            input.addEventListener('input', function() {
+                updatePasswordStrength(this.value);
+            });
+            
+            function updatePasswordStrength(password) {
+                let strength = 0;
+                
+                // Check requirements
+                const hasLength = password.length >= 8;
+                const hasUppercase = /[A-Z]/.test(password);
+                const hasLowercase = /[a-z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                const hasSpecial = /[^A-Za-z0-9]/.test(password);
+                
+                // Update requirement indicators
+                document.getElementById('req-length').className = hasLength ? 'valid' : '';
+                document.getElementById('req-uppercase').className = hasUppercase ? 'valid' : '';
+                document.getElementById('req-lowercase').className = hasLowercase ? 'valid' : '';
+                document.getElementById('req-number').className = hasNumber ? 'valid' : '';
+                document.getElementById('req-special').className = hasSpecial ? 'valid' : '';
+                
+                // Calculate strength
+                if (hasLength) strength++;
+                if (hasUppercase) strength++;
+                if (hasLowercase) strength++;
+                if (hasNumber) strength++;
+                if (hasSpecial) strength++;
+                
+                // Update strength meter
+                const strengthBar = document.getElementById('strength-bar');
+                const strengthText = document.getElementById('strength-text');
+                
+                let width = (strength / 5) * 100;
+                let color = '#ef4444'; // red
+                let text = 'Very Weak';
+                
+                if (strength >= 2) {
+                    color = '#f59e0b'; // amber
+                    text = 'Weak';
+                }
+                if (strength >= 3) {
+                    color = '#f59e0b'; // amber
+                    text = 'Fair';
+                }
+                if (strength >= 4) {
+                    color = '#10b981'; // green
+                    text = 'Good';
+                }
+                if (strength >= 5) {
+                    color = '#10b981'; // green
+                    text = 'Strong';
+                }
+                
+                strengthBar.style.width = width + '%';
+                strengthBar.style.backgroundColor = color;
+                strengthText.textContent = 'Password strength: ' + text;
+                strengthText.style.color = color;
+            }
+        });
+        
+        // Form submission
+        registerForm.addEventListener('submit', function(e) {
+            // Basic validation
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+            
+            // Remove existing error styling
+            document.querySelectorAll('.error-highlight').forEach(el => el.classList.remove('error-highlight'));
+            document.querySelectorAll('.field-error').forEach(el => el.remove());
+            
+            requiredInputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    
+                    // Add error styling
+                    input.classList.add('error-highlight');
+                    input.style.borderColor = '#ef4444';
+                    
+                    // Add error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'field-error';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.fontSize = '0.85rem';
+                    errorDiv.style.marginTop = '5px';
+                    errorDiv.textContent = 'This field is required';
+                    input.parentNode.appendChild(errorDiv);
+                } else {
+                    input.classList.remove('error-highlight');
+                    input.style.borderColor = '';
+                }
+            });
+            
+            // Check password match if there are two password fields
+            const password1 = document.querySelector('input[name*="password1"], input[name*="password"]');
+            const password2 = document.querySelector('input[name*="password2"], input[name*="confirm_password"]');
+            
+            if (password1 && password2 && password1.value !== password2.value) {
+                isValid = false;
+                
+                // Add error to both password fields
+                [password1, password2].forEach(input => {
+                    input.classList.add('error-highlight');
+                    input.style.borderColor = '#ef4444';
+                    
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'field-error';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.fontSize = '0.85rem';
+                    errorDiv.style.marginTop = '5px';
+                    errorDiv.textContent = 'Passwords do not match';
+                    input.parentNode.appendChild(errorDiv);
+                });
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Show loading state
+            registerButton.classList.add('loading');
+            registerButton.disabled = true;
+            registerButton.innerHTML = '<i class="fas fa-spinner"></i> Creating Account...';
+        });
+        
+        // Remove error styling on input
+        const formInputs = document.querySelectorAll('input, select, textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('error-highlight');
+                this.style.borderColor = '';
+                const errorDiv = this.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            });
+        });
+        
+        // Focus on first input
+        window.addEventListener('load', function() {
+            const firstInput = document.querySelector('input[type="text"], input[type="email"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+        
+        // Add character counters to text fields
+        const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea');
+        textInputs.forEach(input => {
+            const charCount = document.createElement('span');
+            charCount.className = 'char-count';
+            charCount.style.display = 'block';
+            charCount.style.textAlign = 'right';
+            charCount.style.fontSize = '0.85rem';
+            charCount.style.color = '#64748b';
+            charCount.style.marginTop = '5px';
+            charCount.textContent = '0 characters';
+            
+            input.parentNode.appendChild(charCount);
+            
+            function updateCharCount() {
+                const length = input.value.length;
+                charCount.textContent = `${length} characters`;
+                
+                if (input.maxLength) {
+                    charCount.textContent += ` / ${input.maxLength}`;
+                    
+                    if (length > input.maxLength * 0.8) {
+                        charCount.style.color = '#f59e0b';
+                    } else {
+                        charCount.style.color = '#64748b';
+                    }
+                }
+            }
+            
+            input.addEventListener('input', updateCharCount);
+            updateCharCount();
+        });
+    </script>
+</body>
+</html>

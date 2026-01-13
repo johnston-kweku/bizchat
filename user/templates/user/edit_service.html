@@ -1,0 +1,373 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      Edit Service Biz Chat
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/edit_service.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="edit-top-nav">
+        <a href="{% url 'user:profile' user.id %}" class="edit-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Profile</span>
+        </a>
+        
+        <div class="edit-header">
+            <h1 class="edit-title">
+                {% if 'edit_business' in request.path %}
+                    Edit Business
+                {% elif 'edit_service' in request.path %}
+                    Edit Service
+                {% elif 'edit_product' in request.path %}
+                    Edit Product
+                {% else %}
+                    Edit Form
+                {% endif %}
+            </h1>
+            <div class="edit-subtitle">Update your information</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="edit-container">
+        <!-- Form Card -->
+        <div class="edit-form-card">
+            <!-- Form Tips (optional) -->
+            <div class="form-tips">
+                <h3 class="tips-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Tips for Editing
+                </h3>
+                <ul class="tips-list">
+                    <li>Make sure all information is accurate and up-to-date</li>
+                    <li>Use clear and descriptive language</li>
+                    <li>Update images to show current products/services</li>
+                    <li>Review all changes before saving</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" class="edit-form-wrapper" id="edit-form">
+                {% csrf_token %}
+                
+                <!-- Django will insert form fields here -->
+                {{ form.as_p }}
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'user:profile' user.id %}" class="cancel-button">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    
+                    <!-- Delete Button for edit_service and edit_product -->
+                    {% if 'edit_service' in request.path %}
+                        <a href="{% url 'user:delete_service' object.id %}" class="delete-button">
+                            <i class="fas fa-trash"></i>
+                            Delete Service
+                        </a>
+                    {% elif 'edit_product' in request.path %}
+                        <a href="{% url 'user:delete_product' object.id %}" class="delete-button">
+                            <i class="fas fa-trash"></i>
+                            Delete Product
+                        </a>
+                    {% endif %}
+                    
+                    <button type="submit" class="edit-submit-button" id="submit-button">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Status Message -->
+            <div class="edit-status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Form elements
+        const editForm = document.getElementById('edit-form');
+        const submitButton = document.getElementById('submit-button');
+        const statusDiv = document.getElementById('status');
+        
+        // Add icons to form labels based on field type
+        const labels = document.querySelectorAll('.edit-form-wrapper label');
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            let iconClass = 'fas fa-edit'; // default icon
+            
+            if (labelText.includes('title') || labelText.includes('name')) {
+                iconClass = 'fas fa-heading';
+            } else if (labelText.includes('description')) {
+                iconClass = 'fas fa-align-left';
+            } else if (labelText.includes('business')) {
+                iconClass = 'fas fa-building';
+            } else if (labelText.includes('service')) {
+                iconClass = 'fas fa-concierge-bell';
+            } else if (labelText.includes('product')) {
+                iconClass = 'fas fa-box';
+            } else if (labelText.includes('price') || labelText.includes('cost')) {
+                iconClass = 'fas fa-money-bill-wave';
+            } else if (labelText.includes('image')) {
+                iconClass = 'fas fa-image';
+            } else if (labelText.includes('category')) {
+                iconClass = 'fas fa-tags';
+            } else if (labelText.includes('email')) {
+                iconClass = 'fas fa-envelope';
+            } else if (labelText.includes('phone')) {
+                iconClass = 'fas fa-phone';
+            } else if (labelText.includes('url') || labelText.includes('website')) {
+                iconClass = 'fas fa-link';
+            }
+            
+            // Create icon element
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            
+            // Insert icon at beginning of label
+            label.insertBefore(icon, label.firstChild);
+            
+            // Add required field indicator
+            const inputId = label.getAttribute('for');
+            if (inputId) {
+                const input = document.getElementById(inputId);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required-field');
+                }
+            }
+        });
+        
+        // Handle image preview for file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (input.accept && input.accept.includes('image')) {
+                // Check if there's a current image
+                const currentImage = input.closest('p').querySelector('img');
+                if (currentImage && currentImage.src) {
+                    // Create preview container
+                    const previewContainer = document.createElement('div');
+                    previewContainer.className = 'file-preview-container';
+                    previewContainer.innerHTML = `
+                        <div class="current-file">
+                            <i class="fas fa-check-circle"></i>
+                            Current image
+                        </div>
+                        <img src="${currentImage.src}" alt="Current image" class="image-preview">
+                    `;
+                    
+                    // Insert after file input
+                    input.parentNode.insertBefore(previewContainer, input.nextSibling);
+                }
+                
+                // Create drag & drop area
+                const dropArea = document.createElement('div');
+                dropArea.className = 'image-drop-area';
+                dropArea.innerHTML = `
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p>Drag and drop new image here</p>
+                    <p class="upload-text">or click to select from your computer</p>
+                `;
+                
+                // Insert before file input
+                input.parentNode.insertBefore(dropArea, input);
+                
+                // Hide original file input
+                input.style.display = 'none';
+                
+                // Drag & drop functionality
+                dropArea.addEventListener('click', () => input.click());
+                
+                dropArea.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    dropArea.classList.add('dragover');
+                });
+                
+                dropArea.addEventListener('dragleave', () => {
+                    dropArea.classList.remove('dragover');
+                });
+                
+                dropArea.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropArea.classList.remove('dragover');
+                    
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.match('image.*')) {
+                        input.files = e.dataTransfer.files;
+                        previewImage(file);
+                    }
+                });
+                
+                input.addEventListener('change', () => {
+                    if (input.files[0]) {
+                        previewImage(input.files[0]);
+                    }
+                });
+                
+                function previewImage(file) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        // Update or create preview
+                        let previewImg = previewContainer.querySelector('.image-preview');
+                        if (!previewImg) {
+                            previewImg = document.createElement('img');
+                            previewImg.className = 'image-preview';
+                            previewContainer.appendChild(previewImg);
+                        }
+                        previewImg.src = e.target.result;
+                        
+                        // Update current file message
+                        const currentFile = previewContainer.querySelector('.current-file');
+                        if (currentFile) {
+                            currentFile.innerHTML = `<i class="fas fa-sync-alt"></i> New image selected`;
+                        }
+                        
+                        showStatus('New image selected', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+        
+        // Add character counters to text fields
+        const textInputs = document.querySelectorAll('input[type="text"], textarea');
+        textInputs.forEach(input => {
+            // Skip if it's a file input
+            if (input.type === 'file') return;
+            
+            const charCount = document.createElement('span');
+            charCount.className = 'char-count';
+            charCount.textContent = '0 characters';
+            
+            input.parentNode.appendChild(charCount);
+            
+            function updateCharCount() {
+                const length = input.value.length;
+                charCount.textContent = `${length} characters`;
+                
+                // Add warning/error classes based on length
+                if (input.tagName === 'TEXTAREA') {
+                    if (length > 2000) {
+                        charCount.classList.add('error');
+                    } else if (length > 1500) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                } else {
+                    if (length > 200) {
+                        charCount.classList.add('error');
+                    } else if (length > 150) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                }
+            }
+            
+            input.addEventListener('input', updateCharCount);
+            input.addEventListener('change', updateCharCount);
+            updateCharCount();
+        });
+        
+        // Form submission
+        editForm.addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll('input[required], textarea[required], select[required]');
+            
+            // Remove existing error styling
+            document.querySelectorAll('.error-highlight').forEach(el => el.classList.remove('error-highlight'));
+            document.querySelectorAll('.field-error').forEach(el => el.remove());
+            
+            requiredInputs.forEach(input => {
+                if (!input.value.trim() && input.type !== 'file') {
+                    isValid = false;
+                    
+                    // Add error styling
+                    input.classList.add('error-highlight');
+                    input.style.borderColor = '#ef4444';
+                    
+                    // Add error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'field-error';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.fontSize = '0.85rem';
+                    errorDiv.style.marginTop = '5px';
+                    errorDiv.textContent = 'This field is required';
+                    input.parentNode.appendChild(errorDiv);
+                } else {
+                    input.classList.remove('error-highlight');
+                    input.style.borderColor = '';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner"></i> Saving Changes...';
+            showStatus('Saving your changes...', 'success');
+        });
+        
+        // Remove error styling on input
+        const formInputs = document.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('error-highlight');
+                this.style.borderColor = '';
+                const errorDiv = this.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            });
+        });
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `edit-status ${type}`;
+            
+            // Auto hide messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Confirm delete action
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const itemType = this.textContent.includes('Service') ? 'service' : 'product';
+                const confirmation = confirm(`Are you sure you want to delete this ${itemType}? This action cannot be undone.`);
+                
+                if (confirmation) {
+                    window.location.href = this.href;
+                }
+            });
+        });
+        
+        // Focus on first input
+        window.addEventListener('load', function() {
+            const firstInput = document.querySelector('input[type="text"]:not([type="file"])');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

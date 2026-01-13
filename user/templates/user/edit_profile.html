@@ -1,0 +1,249 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/edit_profile.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="edit-top-nav">
+        <a href="{% url 'user:profile' user.id %}" class="edit-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Profile</span>
+        </a>
+        
+        <div class="edit-header">
+            <h1 class="edit-title">Edit Profile</h1>
+            <div class="edit-subtitle">Update your personal information</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="edit-container">
+        <!-- Form Card -->
+        <div class="edit-form-card">
+            <form id="profile-form" method="post" enctype="multipart/form-data" action="{% url 'user:edit_profile' user.id %}">
+                {% csrf_token %}
+
+                <!-- Bio Section -->
+                <div class="form-section">
+                    <label for="bio" style="display: block; margin-bottom: 10px; font-weight: 600; color: #92400e;">
+                        <i class="fas fa-user-edit"></i> Bio
+                    </label>
+                    <textarea name="bio" placeholder="Tell us about yourself...">{{ user_profile.bio }}</textarea>
+                </div>
+
+                <!-- Profile Picture Section -->
+                <div class="form-section">
+                    <label style="display: block; margin-bottom: 15px; font-weight: 600; color: #92400e;">
+                        <i class="fas fa-camera"></i> Profile Picture
+                    </label>
+                    
+                    <!-- Current Image -->
+                    {% if user_profile.profile_picture %}
+                    <div class="current-image-info">
+                        <p>
+                            <i class="fas fa-check-circle"></i>
+                            Current profile picture
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Drop Area -->
+                    <div id="drop-area">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p>Drag and drop your profile image here</p>
+                        <p class="upload-text">or click to select from your computer</p>
+                        <input type="file" id="file-input" name="profile_picture" accept="image/*" hidden>
+                    </div>
+
+                    <!-- Preview -->
+                    <div id="preview">
+                        {% if user_profile.profile_picture %}
+                        <img src="{{ user_profile.profile_picture.url }}" id="preview-img" alt="Current profile picture">
+                        {% else %}
+                        <img id="preview-img" style="display: none;">
+                        {% endif %}
+                    </div>
+
+                    <!-- File Requirements -->
+                    <div class="file-requirements">
+                        <p><strong>Requirements:</strong></p>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Accepts: JPG, PNG, GIF</li>
+                            <li><i class="fas fa-check"></i> Max size: 5MB</li>
+                            <li><i class="fas fa-check"></i> Recommended: Square image</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit-button">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </form>
+        </div>
+        
+        <!-- Status Message -->
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const dropArea = document.getElementById("drop-area");
+        const fileInput = document.getElementById("file-input");
+        const previewImg = document.getElementById("preview-img");
+        const submitButton = document.getElementById("submit-button");
+        const statusDiv = document.getElementById("status");
+        const form = document.getElementById("profile-form");
+
+        // Click to select
+        dropArea.addEventListener("click", () => fileInput.click());
+
+        // Drag over
+        dropArea.addEventListener("dragover", e => {
+            e.preventDefault();
+            dropArea.classList.add("dragover");
+        });
+
+        // Drag leave
+        dropArea.addEventListener("dragleave", () => {
+            dropArea.classList.remove("dragover");
+        });
+
+        // Drop
+        dropArea.addEventListener("drop", e => {
+            e.preventDefault();
+            dropArea.classList.remove("dragover");
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.match('image.*')) {
+                showStatus('Please select an image file (JPG, PNG, GIF)', 'error');
+                return;
+            }
+
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showStatus('File size should be less than 5MB', 'error');
+                return;
+            }
+
+            fileInput.files = e.dataTransfer.files;
+            preview(file);
+            showStatus('Image selected successfully!', 'success');
+        });
+
+        // Normal file selection
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files[0]) {
+                const file = fileInput.files[0];
+                
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    showStatus('Please select an image file (JPG, PNG, GIF)', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // Validate file size (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    showStatus('File size should be less than 5MB', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+
+                preview(file);
+                showStatus('Image selected successfully!', 'success');
+            }
+        });
+
+        function preview(file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                previewImg.src = e.target.result;
+                previewImg.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+            
+            // Auto hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+            
+            // Auto hide error messages after 5 seconds
+            if (type === 'error') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Form submission loading state
+        form.addEventListener('submit', function(e) {
+            // Validate bio length if needed
+            const bioTextarea = document.querySelector('textarea[name="bio"]');
+            if (bioTextarea.value.length > 500) {
+                e.preventDefault();
+                showStatus('Bio should be less than 500 characters', 'error');
+                return;
+            }
+
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner"></i> Saving...';
+            
+            showStatus('Saving your profile...', 'success');
+        });
+
+        // Show current image if exists
+        window.addEventListener('load', function() {
+            if (previewImg.src && previewImg.src !== window.location.href) {
+                previewImg.style.display = "block";
+            }
+        });
+
+        // Add visual feedback for bio character count
+        const bioTextarea = document.querySelector('textarea[name="bio"]');
+        if (bioTextarea) {
+            const charCount = document.createElement('div');
+            charCount.style.fontSize = '0.85rem';
+            charCount.style.color = '#64748b';
+            charCount.style.textAlign = 'right';
+            charCount.style.marginTop = '5px';
+            bioTextarea.parentNode.appendChild(charCount);
+
+            function updateCharCount() {
+                const length = bioTextarea.value.length;
+                charCount.textContent = `${length}/500 characters`;
+                
+                if (length > 450) {
+                    charCount.style.color = '#f59e0b';
+                } else if (length > 490) {
+                    charCount.style.color = '#ef4444';
+                } else {
+                    charCount.style.color = '#64748b';
+                }
+            }
+
+            bioTextarea.addEventListener('input', updateCharCount);
+            updateCharCount(); // Initial call
+        }
+    </script>
+</body>
+</html>

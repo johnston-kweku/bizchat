@@ -1,0 +1,173 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ other_user.username }}</title>
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/ajax_chat.css' %}">
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="chat-top-nav">
+    <a href="{% url 'chat:chat-home' %}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Go back</span>
+    </a>
+
+    <!-- Chat Header - Fixed at top -->
+<div class="chat-header">
+    <h1 class="chat-title">
+         {{ other_user.username }}
+        <a href="{% url 'user:profile' other_user.id %}" class="profile-link">
+            <i class="fas fa-user-circle"></i>
+            <span>Profile</span>
+        </a>
+    </h1>
+    <div class="chat-subtitle">Business Chat Pro</div>
+</div>
+
+    <div style="width: 100px;"></div>
+</nav>
+
+<!-- Chat Container -->
+<div class="chat-container">
+
+    <!-- Chat Messages -->
+    <div id="chat-box">
+        <div class="empty-chat">
+            <i class="fas fa-comments"></i>
+            <p>Start a conversation with {{ other_user.username }}</p>
+        </div>
+    </div>
+
+    <!-- Message Input -->
+    <div class="input-container">
+        <input type="text" id="message-input" placeholder="Type your message here...">
+        <button id="send-btn">
+            <i class="fas fa-paper-plane"></i>
+            <span>Send</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+
+const username = "{{ other_user.username }}";
+const CURRENT_USER = "{{ request.user.username }}";
+
+let lastMessageId = 0;
+
+/* ---------------- CSRF ---------------- */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        document.cookie.split(";").forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        });
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie("csrftoken");
+
+/* ---------------- FETCH MESSAGES ---------------- */
+function fetchMessages() {
+    fetch(`/ajax/${username}/`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.messages.length === 0) return;
+
+            document.querySelector(".empty-chat")?.remove();
+
+            data.messages.forEach(msg => {
+                // Check if message already exists in DOM
+                let existing = document.querySelector(`.message[data-message-id='${msg.id}']`);
+
+                const senderLabel = msg.sender === CURRENT_USER ? "You" : msg.sender;
+                const messageClass = msg.sender === CURRENT_USER ? "sent" : "received";
+                const status = msg.sender === CURRENT_USER
+                    ? (msg.is_read ? "✅" : "✔️")
+                    : "";
+
+                if (existing) {
+                    // Update read status if it changed
+                    existing.querySelector(".read-status").textContent = status;
+                } else {
+                    // New message, append
+                    lastMessageId = msg.id;
+
+                    const messageEl = document.createElement("div");
+                    messageEl.className = `message ${messageClass}`;
+                    messageEl.dataset.messageId = msg.id;
+
+                    messageEl.innerHTML = `
+                        <strong>${senderLabel}</strong>
+                        <b>${msg.message}</b>
+                        <span class="read-status">${status}</span>
+                        <span class="message-timestamp">${msg.timestamp}</span>
+                    `;
+
+                    chatBox.appendChild(messageEl);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+            });
+
+            // After all messages processed, mark unread messages as read
+            markRead();
+        });
+}
+
+/* ---------------- SEND MESSAGE ---------------- */
+sendBtn.addEventListener("click", () => {
+    const message = input.value.trim();
+    if (!message) return;
+
+    fetch(`/ajax/${username}/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrftoken
+        },
+        body: `message=${encodeURIComponent(message)}`
+    })
+    .then(() => {
+        input.value = "";
+        fetchMessages();
+    });
+});
+
+input.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendBtn.click();
+});
+
+/* ---------------- READ RECEIPTS ---------------- */
+function markRead() {
+    fetch(`/ajax/read/${username}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrftoken
+        },
+        credentials: "same-origin"
+    });
+}
+
+
+/* ---------------- INIT ---------------- */
+fetchMessages();
+setInterval(fetchMessages, 3000);
+</script>
+
+</body>
+</html>

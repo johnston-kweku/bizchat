@@ -1,0 +1,243 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Service - Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/add_service.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="service-top-nav">
+        <a href="{% url 'user:profile' user.id %}" class="service-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Profile</span>
+        </a>
+        
+        <div class="service-header">
+            <h1 class="service-title">Add New Service</h1>
+            <div class="service-subtitle">Expand your business offerings</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="service-container">
+        <!-- Form Card -->
+        <div class="service-form-card">
+            <!-- Service Tips -->
+            <div class="service-tips">
+                <h3 class="tips-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Tips for Great Service Listings
+                </h3>
+                <ul class="tips-list">
+                    <li>Use clear and descriptive titles</li>
+                    <li>Include all important details in the description</li>
+                    <li>Be specific about what you offer</li>
+                    <li>Mention pricing if applicable</li>
+                    <li>Include estimated timelines</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="service-form-wrapper" id="service-form">
+                {% csrf_token %}
+                
+                <!-- Form Fields -->
+                {{ form.as_p }}
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'user:profile' user.id %}" class="cancel-button">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="service-submit-button" id="submit-button">
+                        <i class="fas fa-plus-circle"></i>
+                        Add Service
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Status Message -->
+            <div class="service-status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Form elements
+        const serviceForm = document.getElementById('service-form');
+        const submitButton = document.getElementById('submit-button');
+        const statusDiv = document.getElementById('status');
+        
+        // Add character counters to text fields
+        const textInputs = document.querySelectorAll('input[type="text"], textarea');
+        textInputs.forEach(input => {
+            // Create character count element
+            const charCount = document.createElement('span');
+            charCount.className = 'char-count';
+            charCount.textContent = '0 characters';
+            
+            // Insert after input
+            input.parentNode.appendChild(charCount);
+            
+            // Update character count
+            function updateCharCount() {
+                const length = input.value.length;
+                charCount.textContent = `${length} characters`;
+                
+                // Add warning/error classes based on length
+                if (input.tagName === 'TEXTAREA') {
+                    if (length > 1000) {
+                        charCount.classList.add('error');
+                    } else if (length > 800) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                } else {
+                    if (length > 100) {
+                        charCount.classList.add('error');
+                    } else if (length > 80) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                }
+            }
+            
+            // Add event listeners
+            input.addEventListener('input', updateCharCount);
+            input.addEventListener('change', updateCharCount);
+            
+            // Initial update
+            updateCharCount();
+        });
+        
+        // Add icons to labels based on field names
+        const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            let iconClass = 'fas fa-tag'; // default icon
+            
+            if (labelText.includes('title')) {
+                iconClass = 'fas fa-heading';
+            } else if (labelText.includes('description')) {
+                iconClass = 'fas fa-align-left';
+            } else if (labelText.includes('service')) {
+                iconClass = 'fas fa-concierge-bell';
+            } else if (labelText.includes('price') || labelText.includes('cost')) {
+                iconClass = 'fas fa-money-bill-wave';
+            }
+            
+            // Create icon element
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            
+            // Insert icon at beginning of label
+            label.insertBefore(icon, label.firstChild);
+            
+            // Add required field indicator
+            const inputId = label.getAttribute('for');
+            if (inputId) {
+                const input = document.getElementById(inputId);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required-field');
+                }
+            }
+        });
+        
+        // Form submission
+        serviceForm.addEventListener('submit', function(e) {
+            // Validate form before submission
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll('input[required], textarea[required]');
+            
+            requiredInputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.style.borderColor = '#ef4444';
+                    
+                    // Add error message if not already present
+                    if (!input.parentNode.querySelector('.field-error')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'field-error';
+                        errorDiv.style.color = '#ef4444';
+                        errorDiv.style.fontSize = '0.85rem';
+                        errorDiv.style.marginTop = '5px';
+                        errorDiv.textContent = 'This field is required';
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                } else {
+                    input.style.borderColor = '';
+                    const existingError = input.parentNode.querySelector('.field-error');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner"></i> Adding Service...';
+            
+            // Show success message
+            showStatus('Adding your service...', 'success');
+        });
+        
+        // Remove error styling on input
+        const formInputs = document.querySelectorAll('input, textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.style.borderColor = '';
+                    const errorDiv = this.parentNode.querySelector('.field-error');
+                    if (errorDiv) {
+                        errorDiv.remove();
+                    }
+                }
+            });
+        });
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `service-status ${type}`;
+            
+            // Auto hide messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Add maxlength attribute to text inputs if they don't have it
+        const titleInput = document.querySelector('input[type="text"]');
+        if (titleInput && !titleInput.hasAttribute('maxlength')) {
+            titleInput.setAttribute('maxlength', '100');
+        }
+        
+        const descriptionTextarea = document.querySelector('textarea');
+        if (descriptionTextarea && !descriptionTextarea.hasAttribute('maxlength')) {
+            descriptionTextarea.setAttribute('maxlength', '1000');
+        }
+        
+        // Focus on first input
+        window.addEventListener('load', function() {
+            const firstInput = document.querySelector('input[type="text"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

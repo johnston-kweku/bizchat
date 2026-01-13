@@ -1,0 +1,236 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Business Chat Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Logo Header -->
+            <div class="login-header">
+                <a href="/" class="login-logo">
+                    <i class="fas fa-comments"></i>
+                    <div class="login-logo-text">Business<span>Chat</span> Pro</div>
+                </a>
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="login-subtitle">Sign in to your account to continue</p>
+            </div>
+
+            <!-- Login Form -->
+            <form method="post" class="login-form" id="login-form">
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i>
+                        Email Address
+                    </label>
+                    <div class="input-container">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" autocomplete="email" name="email" id="email" required 
+                               placeholder="Enter your email address">
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <div class="input-container">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" autocomplete="current-password" name="password" id="password" required
+                               placeholder="Enter your password">
+                        <button type="button" class="password-toggle" id="password-toggle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Options -->
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="{% url 'user:password_reset' %}" class="forgot-password">
+                        <i class="fas fa-key"></i>
+                        Forgot Password?
+                    </a>
+                </div>
+
+                <!-- CSRF Token -->
+                {% csrf_token %}
+
+                <!-- Submit Button -->
+                <button type="submit" class="login-button" id="login-button">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </button>
+
+                <!-- Optional: Social Login Divider -->
+                <div class="login-divider">
+                    <span>Or continue with</span>
+                </div>
+
+                <!-- Optional: Social Login Buttons -->
+                <div class="social-login">
+                    <div class="social-buttons">
+                        <button type="button" class="social-button google">
+                            <i class="fab fa-google"></i>
+                            Google
+                        </button>
+                        <button type="button" class="social-button facebook">
+                            <i class="fab fa-facebook-f"></i>
+                            Facebook
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Footer Links -->
+            <div class="login-footer">
+                <p>Don't have an account? Join our business community</p>
+                <a href="{% url 'user:register' %}" class="signup-link">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password toggle functionality
+        const passwordToggle = document.getElementById('password-toggle');
+        const passwordInput = document.getElementById('password');
+        
+        passwordToggle.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle eye icon
+            const eyeIcon = this.querySelector('i');
+            if (type === 'text') {
+                eyeIcon.className = 'fas fa-eye-slash';
+                this.title = 'Hide password';
+            } else {
+                eyeIcon.className = 'fas fa-eye';
+                this.title = 'Show password';
+            }
+        });
+        
+        // Form submission
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
+        
+        loginForm.addEventListener('submit', function(e) {
+            // Basic validation
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            // Remove existing error messages
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+            
+            let isValid = true;
+            
+            // Email validation
+            if (!email) {
+                showError('email', 'Please enter your email address');
+                isValid = false;
+            } else if (!isValidEmail(email)) {
+                showError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            // Password validation
+            if (!password) {
+                showError('password', 'Please enter your password');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Show loading state
+            loginButton.classList.add('loading');
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<i class="fas fa-spinner"></i> Signing in...';
+        });
+        
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            // Insert after input container
+            field.parentNode.parentNode.appendChild(errorDiv);
+            
+            // Add error styling to input
+            field.style.borderColor = '#ef4444';
+            
+            // Focus on field
+            field.focus();
+        }
+        
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // Remove error styling on input
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.style.borderColor = '';
+                const errorMessage = this.parentNode.parentNode.querySelector('.error-message');
+                if (errorMessage) {
+                    errorMessage.remove();
+                }
+            });
+        });
+        
+        // Social login buttons (optional functionality)
+        const socialButtons = document.querySelectorAll('.social-button');
+        socialButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const provider = this.classList.contains('google') ? 'Google' : 'Facebook';
+                alert(`${provider} login would be implemented here`);
+                // In a real app, this would redirect to OAuth endpoint
+            });
+        });
+        
+        // Auto-focus on email field
+        window.addEventListener('load', function() {
+            document.getElementById('email').focus();
+        });
+        
+        // Remember me functionality
+        const rememberCheckbox = document.getElementById('remember');
+        const emailInput = document.getElementById('email');
+        
+        // Check if there's a saved email
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail && rememberCheckbox) {
+            emailInput.value = savedEmail;
+            rememberCheckbox.checked = true;
+        }
+        
+        // Save email when checkbox is checked on form submit
+        loginForm.addEventListener('submit', function() {
+            if (rememberCheckbox && rememberCheckbox.checked) {
+                localStorage.setItem('rememberedEmail', emailInput.value);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/edit_product.css' %}">
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-card">
+            <!-- Form Header -->
+            <div class="form-header">
+                <h1 class="form-title">Form Title</h1>
+                <p class="form-subtitle">Please fill in the required information</p>
+            </div>
+
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" id="generic-form">
+                {% csrf_token %}
+                
+                <!-- Django will insert form fields here -->
+                {{ form.as_p }}
+                
+                <!-- Submit Button -->
+                <button type="submit" class="submit-button" id="submit-button">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </form>
+            
+            <!-- Status Message -->
+            <div class="form-status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Form elements
+        const genericForm = document.getElementById('generic-form');
+        const submitButton = document.getElementById('submit-button');
+        const statusDiv = document.getElementById('status');
+        
+        // Add icons to form labels based on field type
+        const labels = document.querySelectorAll('form label');
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            let iconClass = 'fas fa-edit'; // default icon
+            
+            // Determine icon based on label text
+            if (labelText.includes('email')) {
+                iconClass = 'fas fa-envelope';
+            } else if (labelText.includes('password')) {
+                iconClass = 'fas fa-lock';
+            } else if (labelText.includes('username') || labelText.includes('user')) {
+                iconClass = 'fas fa-user-circle';
+            } else if (labelText.includes('first') || labelText.includes('name')) {
+                iconClass = 'fas fa-user';
+            } else if (labelText.includes('last')) {
+                iconClass = 'fas fa-user';
+            } else if (labelText.includes('phone')) {
+                iconClass = 'fas fa-phone';
+            } else if (labelText.includes('title') || labelText.includes('subject')) {
+                iconClass = 'fas fa-heading';
+            } else if (labelText.includes('description') || labelText.includes('content')) {
+                iconClass = 'fas fa-align-left';
+            } else if (labelText.includes('message') || labelText.includes('comment')) {
+                iconClass = 'fas fa-comment';
+            } else if (labelText.includes('price') || labelText.includes('cost') || labelText.includes('amount')) {
+                iconClass = 'fas fa-money-bill-wave';
+            } else if (labelText.includes('image') || labelText.includes('photo') || labelText.includes('picture')) {
+                iconClass = 'fas fa-image';
+            } else if (labelText.includes('file') || labelText.includes('document')) {
+                iconClass = 'fas fa-file';
+            } else if (labelText.includes('date')) {
+                iconClass = 'fas fa-calendar';
+            } else if (labelText.includes('time')) {
+                iconClass = 'fas fa-clock';
+            } else if (labelText.includes('category')) {
+                iconClass = 'fas fa-tags';
+            } else if (labelText.includes('address')) {
+                iconClass = 'fas fa-map-marker-alt';
+            } else if (labelText.includes('city')) {
+                iconClass = 'fas fa-city';
+            } else if (labelText.includes('country')) {
+                iconClass = 'fas fa-globe';
+            } else if (labelText.includes('zip') || labelText.includes('postal')) {
+                iconClass = 'fas fa-mail-bulk';
+            }
+            
+            // Create icon element
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            
+            // Insert icon at beginning of label
+            label.insertBefore(icon, label.firstChild);
+            
+            // Add required field indicator
+            const inputId = label.getAttribute('for');
+            if (inputId) {
+                const input = document.getElementById(inputId);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required-field');
+                }
+            }
+        });
+        
+        // Handle image preview for file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (input.accept && input.accept.includes('image')) {
+                // Create preview container
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'file-preview-container';
+                previewContainer.style.display = 'none';
+                
+                // Check if there's a current image URL in a hidden field or similar
+                const currentImage = input.parentNode.querySelector('img');
+                if (currentImage && currentImage.src) {
+                    previewContainer.innerHTML = `
+                        <div class="current-file">
+                            <i class="fas fa-check-circle"></i>
+                            Current image
+                        </div>
+                        <img src="${currentImage.src}" alt="Current image" class="image-preview">
+                    `;
+                    previewContainer.style.display = 'block';
+                }
+                
+                // Insert after file input
+                input.parentNode.insertBefore(previewContainer, input.nextSibling);
+                
+                // Update preview when file is selected
+                input.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Create or update preview
+                            let previewImg = previewContainer.querySelector('.image-preview');
+                            if (!previewImg) {
+                                previewImg = document.createElement('img');
+                                previewImg.className = 'image-preview';
+                                previewContainer.appendChild(previewImg);
+                            }
+                            previewImg.src = e.target.result;
+                            
+                            // Update current file message
+                            const currentFile = previewContainer.querySelector('.current-file');
+                            if (currentFile) {
+                                currentFile.innerHTML = `<i class="fas fa-sync-alt"></i> New image selected`;
+                            } else {
+                                previewContainer.innerHTML = `
+                                    <div class="current-file">
+                                        <i class="fas fa-sync-alt"></i>
+                                        New image selected
+                                    </div>
+                                    <img src="${e.target.result}" alt="Preview" class="image-preview">
+                                `;
+                            }
+                            
+                            previewContainer.style.display = 'block';
+                            showStatus('Image selected', 'success');
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+        });
+        
+        // Add character counters to text fields
+        const textInputs = document.querySelectorAll('input[type="text"], input[type="email"], textarea');
+        textInputs.forEach(input => {
+            // Skip if it's a file input or search input
+            if (input.type === 'file' || input.type === 'search') return;
+            
+            const charCount = document.createElement('span');
+            charCount.className = 'char-count';
+            charCount.textContent = '0 characters';
+            
+            input.parentNode.appendChild(charCount);
+            
+            function updateCharCount() {
+                const length = input.value.length;
+                charCount.textContent = `${length} characters`;
+                
+                // Add warning/error classes based on length
+                const maxLength = input.maxLength || (input.tagName === 'TEXTAREA' ? 2000 : 200);
+                
+                if (length > maxLength) {
+                    charCount.classList.add('error');
+                } else if (length > maxLength * 0.8) {
+                    charCount.classList.add('warning');
+                } else {
+                    charCount.classList.remove('warning', 'error');
+                }
+                
+                // Show max length if specified
+                if (input.maxLength) {
+                    charCount.textContent += ` / ${input.maxLength}`;
+                }
+            }
+            
+            input.addEventListener('input', updateCharCount);
+            input.addEventListener('change', updateCharCount);
+            updateCharCount();
+        });
+        
+        // Form submission
+        genericForm.addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll('input[required], textarea[required], select[required]');
+            
+            // Remove existing error styling
+            document.querySelectorAll('.error-highlight').forEach(el => el.classList.remove('error-highlight'));
+            document.querySelectorAll('.field-error').forEach(el => el.remove());
+            
+            requiredInputs.forEach(input => {
+                // Skip file inputs for required validation (they might be optional)
+                if (input.type === 'file') return;
+                
+                if (!input.value.trim()) {
+                    isValid = false;
+                    
+                    // Add error styling
+                    input.classList.add('error-highlight');
+                    input.style.borderColor = '#ef4444';
+                    
+                    // Add error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'field-error';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.fontSize = '0.85rem';
+                    errorDiv.style.marginTop = '5px';
+                    errorDiv.textContent = 'This field is required';
+                    input.parentNode.appendChild(errorDiv);
+                } else {
+                    input.classList.remove('error-highlight');
+                    input.style.borderColor = '';
+                }
+            });
+            
+            // Validate email fields
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                if (input.value.trim() && !isValidEmail(input.value)) {
+                    isValid = false;
+                    
+                    input.classList.add('error-highlight');
+                    input.style.borderColor = '#ef4444';
+                    
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'field-error';
+                    errorDiv.style.color = '#ef4444';
+                    errorDiv.style.fontSize = '0.85rem';
+                    errorDiv.style.marginTop = '5px';
+                    errorDiv.textContent = 'Please enter a valid email address';
+                    input.parentNode.appendChild(errorDiv);
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showStatus('Please correct the errors in the form', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner"></i> Processing...';
+            showStatus('Submitting form...', 'success');
+        });
+        
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // Remove error styling on input
+        const formInputs = document.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('error-highlight');
+                this.style.borderColor = '';
+                const errorDiv = this.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            });
+        });
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `form-status ${type}`;
+            
+            // Auto hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+            
+            // Auto hide error messages after 5 seconds
+            if (type === 'error') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Focus on first input
+        window.addEventListener('load', function() {
+            const firstInput = document.querySelector('input:not([type="hidden"]), textarea, select');
+            if (firstInput) {
+                firstInput.focus();
+            }
+            
+            // Update page title based on form purpose
+            const pageTitle = document.querySelector('.form-title');
+            if (!pageTitle.textContent || pageTitle.textContent === 'Form Title') {
+                // Try to guess form purpose from URL or form fields
+                if (window.location.href.includes('password')) {
+                    pageTitle.textContent = 'Password Reset';
+                    document.title = 'Password Reset - Business Chat Pro';
+                } else if (window.location.href.includes('reset')) {
+                    pageTitle.textContent = 'Reset Form';
+                    document.title = 'Reset - Business Chat Pro';
+                }
+            }
+        });
+        
+        // Add maxlength attribute to text inputs if they don't have it
+        const textFields = document.querySelectorAll('input[type="text"]:not([maxlength])');
+        textFields.forEach(field => {
+            field.setAttribute('maxlength', '255');
+        });
+        
+        const textareas = document.querySelectorAll('textarea:not([maxlength])');
+        textareas.forEach(textarea => {
+            textarea.setAttribute('maxlength', '2000');
+        });
+    </script>
+</body>
+</html>

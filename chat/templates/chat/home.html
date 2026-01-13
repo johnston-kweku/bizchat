@@ -1,0 +1,227 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="manifest" href="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/chatwork.svg">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <button class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        
+        <a href="/" class="logo">
+            <i class="fas fa-comments"></i>
+            <span>Biz Chat</span>
+        </a>
+        
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <div class="user-avatar">
+                {{ user.username|first|upper }}
+            </div>
+            <span>{{ user.username }}</span>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            {% if user.is_authenticated %}
+            <a class="sidebar-link" href="{% url 'user:users' %}">
+                <i class="fas fa-users"></i> All Users
+            </a>
+            <a class="sidebar-link" href="{% url 'user:profile' user.id %}">
+                <i class="fas fa-user"></i> My Profile
+            </a>
+            <a class="sidebar-link" href="/">
+                <i class="fas fa-inbox"></i> Inbox
+            </a>
+            <a class="sidebar-link" href="{% url 'user:logout' %}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            {% else %}
+            <a class="sidebar-link" href="{% url 'user:login' %}">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a class="sidebar-link" href="{% url 'user:register' %}">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <header class="header">
+                {% if user.is_authenticated %}
+                <h1 class="title">Welcome back, {{user.username}} 👋</h1>
+                <p class="welcome">Your professional conversations</p>
+                {% else %}
+                <h1 class="title">Welcome to Business Chat Pro</h1>
+                <p class="welcome">Professional communication platform</p>
+                <nav class="auth-nav">
+                    <a class="auth-link" href="{% url 'user:register' %}">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </a>
+                    <a class="auth-link" href="{% url 'user:login' %}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </nav>
+                {% endif %}
+            </header>
+            
+            <ul class="inbox-list" id="inbox-list">
+            {% if conversations %}
+                {% for user, data in conversations %}
+                    <li class="inbox-item">
+                        <a class="inbox-item-link" href="/{{ user.username }}/">
+                            <div class="chat-avatar">
+                                {{ user.username|first|upper }}
+                            </div>
+                            <div class="chat-content">
+                                <span class="username">{{ user.username }}</span>
+                                <small class="last-message">{{ data.last.message }}</small>
+                            </div>
+                            <div class="meta">
+                                {% if data.unread > 0 %}
+                                    <span class="unread">{{ data.unread }}</span>
+                                {% endif %}
+                                <span class="time">Now</span>
+                                {% if data.online %}
+                                    <span class="status status-online">🟢</span>
+                                {% else %}
+                                    <span class="status status-offline">🔴</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li class="inbox-item empty">
+                    <div class="empty-icon">
+                        <i class="fas fa-comment-slash"></i>
+                    </div>
+                    <p>No conversations yet.<br>Start a new business chat!</p>
+                </li>
+            {% endif %}
+            </ul>
+        </div>
+    </main>
+
+<script>
+// Hamburger menu functionality
+const hamburger = document.getElementById('hamburger');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('active');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+});
+
+overlay.addEventListener('click', () => {
+    hamburger.classList.remove('active');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+});
+
+// Inbox functionality
+const inboxList = document.getElementById("inbox-list");
+const CURRENT_USER = "{{ user.username }}";
+
+function loadInbox() {
+    fetch("{% url 'chat:inbox_ajax' %}", { credentials: 'same-origin' })
+    .then(res => res.json())
+    .then(data => {
+        inboxList.innerHTML = "";
+        if (data.conversations.length === 0) {
+            inboxList.innerHTML = `
+                <li class="inbox-item empty">
+                    <div class="empty-icon">
+                        <i class="fas fa-comment-slash"></i>
+                    </div>
+                    <p>No conversations yet.<br>Start a new business chat!</p>
+                </li>`;
+            return;
+        }
+
+        data.conversations.forEach(conv => {
+            const unreadHtml = conv.unread > 0 ? 
+                `<span class="unread">${conv.unread}</span>` : '';
+            const statusHtml = conv.online ? 
+                `<span class="status status-online">🟢</span>` : 
+                `<span class="status status-offline">🔴</span>`;
+            
+            inboxList.innerHTML += `
+            <li class="inbox-item">
+                <a class="inbox-item-link" href="/${conv.username}/">
+                    <div class="chat-avatar">
+                        ${conv.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="chat-content">
+                        <span class="username">${conv.username}</span>
+                        <small class="last-message">
+                            ${conv.last_sender === CURRENT_USER ? 'You: ' : conv.last_sender + ': '}
+                            ${conv.last_message}
+                        </small>
+                    </div>
+                    <div class="meta">
+                        ${unreadHtml}
+                        <span class="time">Now</span>
+                        ${statusHtml}
+                    </div>
+                </a>
+            </li>
+            `;
+        });
+    });
+}
+
+// Reload inbox every 3 seconds
+setInterval(loadInbox, 3000);
+loadInbox();
+
+// Heartbeat to update last_seen
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(cookie => {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        });
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+function heartbeat(){
+    fetch("{% url 'chat:heartbeat' %}", {
+    method:'POST',
+    headers:{ 'X-CSRFToken': csrftoken },
+    credentials:'same-origin'
+});
+}
+
+setInterval(heartbeat, 20000);
+heartbeat();
+</script>
+
+</body>
+</html>

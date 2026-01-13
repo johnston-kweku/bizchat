@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }}'s Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="profile-top-nav">
+        <!-- Hamburger Menu Button -->
+        <button class="hamburger-menu" id="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        
+        <!-- Desktop Navigation Links -->
+        <div class="nav-links-container">
+            <a href="{% url 'chat:chat-home' %}" class="nav-link">
+                <i class="fas fa-inbox"></i>
+                <span>Inbox</span>
+            </a>
+            <a href="{% url 'user:users' %}" class="nav-link">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back To Users</span>
+            </a>
+        </div>
+        
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h1 class="profile-title">{{ user.username }}'s Profile</h1>
+            <div class="profile-subtitle">Business Profile</div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Sidebar -->
+    <div class="mobile-nav-sidebar" id="mobile-nav-sidebar">
+        <a href="{% url 'chat:chat-home' %}" class="mobile-nav-link">
+            <i class="fas fa-inbox"></i>
+            Inbox
+        </a>
+        <a href="{% url 'user:users' %}" class="mobile-nav-link">
+            <i class="fas fa-arrow-left"></i>
+            Back To Users
+        </a>
+        {% if user == request.user %}
+        <a href="{% url 'user:edit_business' %}" class="mobile-nav-link">
+            <i class="fas fa-building"></i>
+            Edit Business
+        </a>
+        <a href="{% url 'user:edit_profile' user.id %}" class="mobile-nav-link">
+            <i class="fas fa-user-edit"></i>
+            Edit Profile
+        </a>
+        <a href="{% url 'user:add_service' %}" class="mobile-nav-link">
+            <i class="fas fa-concierge-bell"></i>
+            Add Service
+        </a>
+        <a href="{% url 'user:add_product' %}" class="mobile-nav-link">
+            <i class="fas fa-box-open"></i>
+            Add Product
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+
+    <!-- Main Content -->
+    <div class="profile-container">
+        <!-- Edit Actions (for current user) - Desktop Only -->
+        {% if user == request.user %}
+        <div class="edit-actions desktop-only">
+            <a href="{% url 'user:edit_business' %}" class="edit-action-link">
+                <i class="fas fa-building"></i>
+                Edit Business
+            </a>
+            <a href="{% url 'user:edit_profile' user.id %}" class="edit-action-link">
+                <i class="fas fa-user-edit"></i>
+                Edit Profile
+            </a>
+            <a href="{% url 'user:add_service' %}" class="edit-action-link">
+                <i class="fas fa-concierge-bell"></i>
+                Add Service
+            </a>
+            <a href="{% url 'user:add_product' %}" class="edit-action-link">
+                <i class="fas fa-box-open"></i>
+                Add Product
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <!-- Profile Header Section -->
+            <div class="profile-header-section">
+                <!-- Profile Picture -->
+                <div class="profile-picture-container">
+                    {% if user_profile.profile_picture %}
+                    <img src="{{ user_profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-picture">
+                    {% else %}
+                    <div class="default-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- User Info -->
+                <div class="user-info">
+                    <h2 class="about-title">
+                        {% if user == request.user %}
+                        About You
+                        {% else %}
+                        About {{ user.username }}
+                        {% endif %}
+                    </h2>
+                    
+                    <!-- Status -->
+                    <div class="status-container">
+                        <span class="status-label">Status:</span>
+                        <div class="status-indicator {% if user_profile.is_online %}status-online{% else %}status-offline{% endif %}">
+                            <span class="status-dot"></span>
+                            {% if user == request.user %}
+                            Online 🟢
+                            {% else %}
+                            {% if user_profile.is_online %}
+                            Online 🟢
+                            {% else %}
+                            Offline 🔴
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Full Name -->
+                    <div class="user-details">
+                        <h3 class="full-name">
+                            Full Name: <span>{{ user.last_name }} {{ user.first_name }}</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bio -->
+            {% if user_profile.bio %}
+            <div class="bio-section">
+                <h3 class="bio-title">Bio:</h3>
+                <p class="bio-content">{{ user_profile.bio }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Business Info -->
+            <div class="business-section">
+                <h2 class="business-name">
+                    <i class="fas fa-briefcase"></i>
+                    Business Name:<br> <em>{{ user_profile.business.title }}</em>
+                </h2>
+                
+                <!-- Services -->
+                <div class="services-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-concierge-bell"></i>
+                        Services
+                    </h3>
+                    
+                    {% if user_profile.business.services.all %}
+                    <div class="items-grid">
+                        {% for service in user_profile.business.services.all %}
+                        <div class="item-card">
+                            <div class="item-title">
+                                <span>{{ service.title }}</span>
+                                <div class="item-actions">
+                                    <a href="{% url 'user:edit_service' service.id %}" class="edit-link">
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'user:delete_service' service.id %}" class="delete-link">
+                                        Delete
+                                    </a>
+                                </div>
+                            </div>
+                            {% if service.description %}
+                            <p class="item-description">{{ service.description }}</p>
+                            {% else %}
+                            <p class="no-description">No description for this service</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-concierge-bell"></i>
+                        </div>
+                        <p>No services added</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Products -->
+                <div class="products-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-box-open"></i>
+                        Products
+                    </h3>
+                    
+                    {% if user_profile.business.products.all %}
+                    <div class="items-grid">
+                        {% for product in user_profile.business.products.all %}
+                        <div class="item-card">
+                            <div class="item-title">
+                                <span>{{ product.title }}</span>
+                                <div class="item-actions">
+                                    <a href="{% url 'user:edit_product' product.id %}" class="edit-link">
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'user:delete_product' product.id %}" class="delete-link">
+                                        Delete
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            {% if product.description %}
+                            <p class="item-description">{{ product.description }}</p>
+                            {% else %}
+                            <p class="no-description">No description for this product</p>
+                            {% endif %}
+                            
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.title }}" class="product-image">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <p>No products added</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hamburger Menu Functionality
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const mobileNavSidebar = document.getElementById('mobile-nav-sidebar');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        
+        hamburgerMenu.addEventListener('click', () => {
+            hamburgerMenu.classList.toggle('active');
+            mobileNavSidebar.classList.toggle('active');
+            mobileOverlay.classList.toggle('active');
+        });
+        
+        mobileOverlay.addEventListener('click', () => {
+            hamburgerMenu.classList.remove('active');
+            mobileNavSidebar.classList.remove('active');
+            mobileOverlay.classList.remove('active');
+        });
+        
+        // Close sidebar when clicking on a link
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                hamburgerMenu.classList.remove('active');
+                mobileNavSidebar.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+            });
+        });
+        
+        // Original button functionality
+        const button = document.getElementById("submit");
+        if (button) {
+            button.addEventListener("mouseover", function(){
+                button.innerHTML = 'Do you really wanna submit?';
+            });
+            button.addEventListener("mouseleave", function(){
+                button.innerHTML = 'Submit';
+            });
+        }
+    </script>
+</body>
+</html>

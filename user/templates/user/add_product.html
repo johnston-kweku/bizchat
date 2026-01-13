@@ -1,0 +1,371 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/add_product.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="product-top-nav">
+        <a href="{% url 'user:profile' user.id %}" class="product-back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to Profile</span>
+        </a>
+        
+        <div class="product-header">
+            <h1 class="product-title">Add New Product</h1>
+            <div class="product-subtitle">Showcase your products to customers</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="product-container">
+        <!-- Form Card -->
+        <div class="product-form-card">
+            <!-- Product Tips -->
+            <div class="product-tips">
+                <h3 class="tips-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Tips for Great Product Listings
+                </h3>
+                <ul class="tips-list">
+                    <li>Use clear, high-quality product images</li>
+                    <li>Write detailed and accurate descriptions</li>
+                    <li>Include all relevant specifications</li>
+                    <li>Set competitive pricing</li>
+                    <li>Mention availability and shipping details</li>
+                </ul>
+            </div>
+
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" class="product-form-wrapper" id="product-form">
+                {% csrf_token %}
+                
+                <!-- Basic Information Section -->
+                <div class="form-section-group">
+                    <h3 class="section-group-title">
+                        <i class="fas fa-info-circle"></i>
+                        Product Information
+                    </h3>
+                    
+                    <!-- Django will insert form fields here -->
+                    {{ form.as_p }}
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'user:profile' user.id %}" class="cancel-button">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="product-submit-button" id="submit-button">
+                        <i class="fas fa-plus-circle"></i>
+                        Add Product
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Status Message -->
+            <div class="product-status" id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // Form elements
+        const productForm = document.getElementById('product-form');
+        const submitButton = document.getElementById('submit-button');
+        const statusDiv = document.getElementById('status');
+        
+        // Find the image file input (assuming it's in the form)
+        const imageFileInput = document.querySelector('input[type="file"][name*="image"]');
+        
+        if (imageFileInput) {
+            // Create a container for the image upload UI
+            const imageFieldContainer = imageFileInput.closest('p');
+            
+            // Create drag & drop area
+            const dropArea = document.createElement('div');
+            dropArea.className = 'image-drop-area';
+            dropArea.innerHTML = `
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <p>Drag and drop product images here</p>
+                <p class="upload-text">or click to select from your computer</p>
+            `;
+            
+            // Create image preview gallery
+            const gallery = document.createElement('div');
+            gallery.className = 'image-gallery';
+            gallery.id = 'image-gallery';
+            
+            // Create file requirements
+            const requirements = document.createElement('div');
+            requirements.className = 'file-requirements';
+            requirements.innerHTML = `
+                <p><strong>Image Requirements:</strong></p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Accepts: JPG, PNG, GIF</li>
+                    <li><i class="fas fa-check"></i> Max size: 5MB per image</li>
+                    <li><i class="fas fa-check"></i> Recommended: 800x600 pixels or larger</li>
+                </ul>
+            `;
+            
+            // Insert the new elements
+            imageFileInput.style.display = 'none'; // Hide original file input
+            imageFieldContainer.appendChild(dropArea);
+            imageFieldContainer.appendChild(gallery);
+            imageFieldContainer.appendChild(requirements);
+            
+            // Drag & drop functionality
+            let selectedFiles = [];
+            
+            dropArea.addEventListener('click', () => imageFileInput.click());
+            
+            dropArea.addEventListener('dragover', e => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+            
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('dragover');
+            });
+            
+            dropArea.addEventListener('drop', e => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                handleImageFiles(files);
+            });
+            
+            imageFileInput.addEventListener('change', () => {
+                const files = Array.from(imageFileInput.files);
+                handleImageFiles(files);
+            });
+            
+            function handleImageFiles(files) {
+                // Filter only image files
+                const imageFiles = files.filter(file => file.type.match('image.*'));
+                
+                // Validate file sizes
+                const validFiles = imageFiles.filter(file => {
+                    if (file.size > 5 * 1024 * 1024) {
+                        showStatus(`File "${file.name}" exceeds 5MB limit`, 'error');
+                        return false;
+                    }
+                    return true;
+                });
+                
+                if (validFiles.length === 0) return;
+                
+                // Add to selected files
+                selectedFiles = [...selectedFiles, ...validFiles];
+                
+                // Update file input (create new FileList)
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                imageFileInput.files = dataTransfer.files;
+                
+                // Update preview
+                updateImagePreview();
+                
+                showStatus(`Added ${validFiles.length} image(s)`, 'success');
+            }
+            
+            function updateImagePreview() {
+                gallery.innerHTML = '';
+                
+                selectedFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'gallery-image';
+                        img.alt = file.name;
+                        img.title = `Click to remove ${file.name}`;
+                        
+                        // Add remove functionality
+                        img.addEventListener('click', () => removeImage(index));
+                        
+                        gallery.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            function removeImage(index) {
+                selectedFiles.splice(index, 1);
+                
+                // Update file input
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                imageFileInput.files = dataTransfer.files;
+                
+                // Update preview
+                updateImagePreview();
+                
+                showStatus('Image removed', 'success');
+            }
+        }
+        
+        // Add character counters to text fields
+        const textInputs = document.querySelectorAll('input[type="text"], textarea');
+        textInputs.forEach(input => {
+            // Skip if it's a file input or has a parent with file upload UI
+            if (input.type === 'file' || input.closest('.image-drop-area')) return;
+            
+            const charCount = document.createElement('span');
+            charCount.className = 'char-count';
+            charCount.textContent = '0 characters';
+            
+            input.parentNode.appendChild(charCount);
+            
+            function updateCharCount() {
+                const length = input.value.length;
+                charCount.textContent = `${length} characters`;
+                
+                if (input.tagName === 'TEXTAREA') {
+                    if (length > 2000) {
+                        charCount.classList.add('error');
+                    } else if (length > 1500) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                } else {
+                    if (length > 200) {
+                        charCount.classList.add('error');
+                    } else if (length > 150) {
+                        charCount.classList.add('warning');
+                    } else {
+                        charCount.classList.remove('warning', 'error');
+                    }
+                }
+            }
+            
+            input.addEventListener('input', updateCharCount);
+            input.addEventListener('change', updateCharCount);
+            updateCharCount();
+        });
+        
+        // Add icons to labels
+        const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const labelText = label.textContent.toLowerCase();
+            let iconClass = 'fas fa-tag';
+            
+            if (labelText.includes('title') || labelText.includes('name')) {
+                iconClass = 'fas fa-heading';
+            } else if (labelText.includes('description')) {
+                iconClass = 'fas fa-align-left';
+            } else if (labelText.includes('product')) {
+                iconClass = 'fas fa-box';
+            } else if (labelText.includes('price') || labelText.includes('cost')) {
+                iconClass = 'fas fa-money-bill-wave';
+            } else if (labelText.includes('image')) {
+                iconClass = 'fas fa-image';
+            } else if (labelText.includes('category')) {
+                iconClass = 'fas fa-tags';
+            }
+            
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            label.insertBefore(icon, label.firstChild);
+            
+            // Add required field indicator
+            const inputId = label.getAttribute('for');
+            if (inputId) {
+                const input = document.getElementById(inputId);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required-field');
+                }
+            }
+        });
+        
+        // Form submission
+        productForm.addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredInputs = document.querySelectorAll('input[required], textarea[required], select[required]');
+            
+            requiredInputs.forEach(input => {
+                if (!input.value.trim() && input.type !== 'file') {
+                    isValid = false;
+                    input.style.borderColor = '#ef4444';
+                    
+                    if (!input.parentNode.querySelector('.field-error')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'field-error';
+                        errorDiv.style.color = '#ef4444';
+                        errorDiv.style.fontSize = '0.85rem';
+                        errorDiv.style.marginTop = '5px';
+                        errorDiv.textContent = 'This field is required';
+                        input.parentNode.appendChild(errorDiv);
+                    }
+                } else {
+                    input.style.borderColor = '';
+                    const existingError = input.parentNode.querySelector('.field-error');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                showStatus('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            submitButton.classList.add('loading');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner"></i> Adding Product...';
+            showStatus('Adding your product...', 'success');
+        });
+        
+        // Remove error styling on input
+        const formInputs = document.querySelectorAll('input, textarea, select');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.style.borderColor = '';
+                    const errorDiv = this.parentNode.querySelector('.field-error');
+                    if (errorDiv) {
+                        errorDiv.remove();
+                    }
+                }
+            });
+        });
+        
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `product-status ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Add price styling to price field
+        const priceInput = document.querySelector('input[type="number"]');
+        if (priceInput) {
+            const wrapper = priceInput.parentNode;
+            wrapper.classList.add('price-input-wrapper');
+        }
+        
+        // Focus on first input
+        window.addEventListener('load', function() {
+            const firstInput = document.querySelector('input[type="text"]:not([type="file"])');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

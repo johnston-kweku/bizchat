@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biz Chat Users</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/users.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="users-top-nav">
+        <a href="{% url 'chat:chat-home' %}" class="inbox-btn">
+            <i class="fas fa-inbox"></i>
+            <span>Inbox</span>
+        </a>
+        
+        <div class="users-header">
+            <h1 class="users-title">Biz Chat Users</h1>
+            <div class="users-subtitle">Connect with your colleagues</div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="users-container">
+        <!-- Optional Search Bar -->
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="Search users..." id="user-search">
+        </div>
+
+        <!-- Users Grid -->
+        <div class="users-grid">
+            {% for user in users %}
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="user-details">
+                        <h3 class="username">{{ user.username }}</h3>
+                        <span class="user-id">ID: {{ user.id }}</span>
+                    </div>
+                </div>
+                
+                <div class="user-actions">
+                    <a href="{% url 'chat:chat' user.username %}" class="chat-btn">
+                        <i class="fas fa-comments"></i>
+                        Chat
+                    </a>
+                    <a href="{% url 'user:profile' user.id %}" class="profile-btn">
+                        <i class="fas fa-user-circle"></i>
+                        Profile
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-users">
+                <div class="empty-icon">
+                    <i class="fas fa-users-slash"></i>
+                </div>
+                <p>No users found</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Optional JavaScript for search functionality -->
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('user-search');
+        const userCards = document.querySelectorAll('.user-card');
+        
+        searchInput?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            userCards.forEach(card => {
+                const username = card.querySelector('.username').textContent.toLowerCase();
+                const userId = card.querySelector('.user-id').textContent.toLowerCase();
+                
+                if (username.includes(searchTerm) || userId.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

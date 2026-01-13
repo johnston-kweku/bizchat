@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Business - Biz Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/edit_business.css' %}">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="form-top-nav">
+        <a href="{% url 'user:profile' user.id %}" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back to profile</span>
+        </a>
+        
+        <div class="form-header">
+            <h1 class="form-title">
+                {% if 'edit_business' in request.path %}
+                Edit Business
+                {% elif 'edit_profile' in request.path %}
+                Edit Profile
+                {% elif 'add_service' in request.path or 'edit_service' in request.path %}
+                Manage Service
+                {% elif 'add_product' in request.path or 'edit_product' in request.path %}
+                Manage Product
+                {% else %}
+                Edit Form
+                {% endif %}
+            </h1>
+            <div class="form-subtitle">Business Chat Pro</div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="form-container">
+        <!-- Form Card -->
+        <div class="form-card">
+            <form method="post" enctype="multipart/form-data" class="form-wrapper">
+                {% csrf_token %}
+                
+                <!-- Display form fields -->
+                {{ form.as_p }}
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'user:profile' user.id %}" class="cancel-button">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="submit-button" id="submit-button">
+                        <i class="fas fa-save"></i>
+                        Save changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Add loading state to submit button
+        const submitButton = document.getElementById('submit-button');
+        const form = document.querySelector('form');
+        
+        if (form && submitButton) {
+            form.addEventListener('submit', function() {
+                submitButton.classList.add('loading');
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner"></i> Saving...';
+            });
+        }
+        
+        // Image preview for file inputs
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (input.accept && input.accept.includes('image')) {
+                input.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Remove existing preview
+                            const existingPreview = input.parentNode.querySelector('.image-preview');
+                            if (existingPreview) {
+                                existingPreview.remove();
+                            }
+                            
+                            // Create new preview
+                            const previewDiv = document.createElement('div');
+                            previewDiv.className = 'image-preview';
+                            previewDiv.innerHTML = `
+                                <p><strong>Preview:</strong></p>
+                                <img src="${e.target.result}" alt="Preview" class="preview-image">
+                            `;
+                            input.parentNode.appendChild(previewDiv);
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+        
+        // Add required field indicators
+        const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const fieldName = label.getAttribute('for');
+            if (fieldName) {
+                const input = document.getElementById(fieldName);
+                if (input && input.hasAttribute('required')) {
+                    label.classList.add('required');
+                }
+            }
+        });
+        
+        // Style Django form errors
+        const errorLists = document.querySelectorAll('.errorlist');
+        errorLists.forEach(list => {
+            list.parentNode.classList.add('has-error');
+        });
+    </script>
+</body>
+</html>
