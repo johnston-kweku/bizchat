@@ -77,6 +77,10 @@ TEMPLATES = [
     },
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://talia-herbivorous-jeanette.ngrok-free.dev"
+]
+
 WSGI_APPLICATION = 'chatapp.wsgi.application'
 
 
